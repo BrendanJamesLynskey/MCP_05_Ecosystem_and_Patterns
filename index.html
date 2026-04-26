@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP 05 — Ecosystem & Patterns</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-card: #0d1117;
+            --bg-code: #161b22;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #76B900;
+            --accent-dim: #76B90044;
+            --accent-glow: #76B90033;
+            --border: #21262d;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --font-body: 'Inter', sans-serif;
+            --max-width: 900px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 17px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero > * { position: relative; z-index: 1; }
+        .series-label {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .hero h1 .accent { color: var(--accent); }
+        .hero .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin-bottom: 2rem;
+        }
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            white-space: nowrap;
+        }
+        .pipeline {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            max-width: var(--max-width);
+        }
+        .pipeline-step {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 0.3rem 0.7rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .pipeline-arrow { color: var(--accent); font-size: 0.9rem; font-weight: 700; }
+        .slide {
+            min-height: 100vh;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .slide-number {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--accent-dim);
+            position: absolute;
+            top: 2rem;
+            right: 1.5rem;
+            line-height: 1;
+            user-select: none;
+        }
+        .slide h2 {
+            font-family: var(--font-display);
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            line-height: 1.25;
+        }
+        .slide h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .slide p { margin-bottom: 1rem; color: var(--text-secondary); }
+        .slide p strong { color: var(--text-primary); }
+        .slide ul, .slide ol { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+        .slide li { margin-bottom: 0.4rem; }
+        .slide li strong { color: var(--text-primary); }
+        .slide code {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            padding: 0.05rem 0.35rem;
+            border-radius: 3px;
+            color: #c9d1d9;
+        }
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1.25rem 0;
+            overflow: hidden;
+        }
+        .code-header {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: rgba(118, 185, 0, 0.08);
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .code-block pre { margin: 0; padding: 1rem; overflow-x: auto; }
+        .code-block code {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #c9d1d9;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+        .kw { color: #ff7b72; }
+        .fn { color: #d2a8ff; }
+        .str { color: #a5d6ff; }
+        .cm { color: #8b949e; font-style: italic; }
+        .num { color: #79c0ff; }
+        .type { color: #ffa657; }
+        .dir { color: #ff7b72; }
+        .mac { color: #ffa657; }
+        .table-wrap {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th {
+            background: var(--bg-code);
+            color: var(--accent);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-display);
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: rgba(13, 17, 23, 0.5); }
+        .diagram-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-box {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .diagram-box.accent { border-color: var(--accent); color: var(--accent); background: rgba(118, 185, 0, 0.08); }
+        .diagram-box.dim { color: var(--text-secondary); border-color: var(--border); }
+        .diagram-arrow { color: var(--accent); font-size: 1.3rem; font-weight: 700; }
+        .diagram-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-vertical .diagram-arrow { font-size: 1.1rem; }
+        .hierarchy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .hierarchy-level { display: flex; align-items: center; gap: 0.75rem; }
+        .hierarchy-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+            text-align: right;
+        }
+        .hierarchy-items { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+        .hierarchy-item {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .hierarchy-item.accent { border-color: var(--accent); color: var(--accent); background: rgba(118, 185, 0, 0.08); }
+        .diagram-grid {
+            display: grid;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .diagram-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .diagram-panel {
+            padding: 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+        .diagram-panel.accent-border { border-left: 3px solid var(--accent); }
+        .diagram-panel h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        .diagram-panel p, .diagram-panel ul { font-size: 0.85rem; }
+        .callout {
+            background: var(--bg-card);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+        }
+        .callout p { margin-bottom: 0; }
+        .callout p + p { margin-top: 0.5rem; }
+        .callout .callout-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+        .contents-list { list-style: none; padding-left: 0; counter-reset: contents; }
+        .contents-list li {
+            counter-increment: contents;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .contents-list li:last-child { border-bottom: none; }
+        .contents-list li::before {
+            content: counter(contents, decimal-leading-zero);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 2rem;
+        }
+        .contents-list a { color: var(--text-primary); text-decoration: none; transition: color 0.2s; }
+        .contents-list a:hover { color: var(--accent); }
+        .footer {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .canvas-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+        .canvas-wrap canvas, .canvas-wrap svg { display: block; margin: 0 auto; max-width: 100%; }
+        .badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            vertical-align: middle;
+            margin-left: 0.3rem;
+        }
+        .badge.ok    { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+        .badge.warn  { border-color: #ffa657; color: #ffa657; background: rgba(255,166,87,0.08); }
+        .badge.bad   { border-color: #ff7b72; color: #ff7b72; background: rgba(255,123,114,0.08); }
+        @media (max-width: 640px) {
+            .slide { padding: 3rem 1rem; min-height: auto; }
+            .slide-number { font-size: 3rem; top: 1.5rem; right: 1rem; }
+            .slide h2 { font-size: 1.5rem; }
+            .diagram-grid.cols-2, .diagram-grid.cols-3 { grid-template-columns: 1fr; }
+            .pipeline { gap: 0.15rem; }
+            .pipeline-step { font-size: 0.6rem; padding: 0.2rem 0.4rem; }
+            .hero h1 { font-size: 1.8rem; }
+            table { font-size: 0.78rem; }
+        }
+    </style>
+</head>
+<body>
+<header class="hero">
+    <div class="series-label">Model Context Protocol Series — Presentation 05</div>
+    <h1>Ecosystem &amp; <span class="accent">Patterns</span></h1>
+    <p class="subtitle">Every host that speaks MCP, the reference servers worth reading, the Registry, the four canonical server-design patterns, and how distribution really works in 2026.</p>
+
+    <div class="tags">
+        <span class="tag">Hosts</span>
+        <span class="tag">Reference Servers</span>
+        <span class="tag">Registry</span>
+        <span class="tag">Patterns</span>
+        <span class="tag">uvx / npx</span>
+        <span class="tag">Versioning</span>
+    </div>
+
+    <div class="pipeline">
+        <span class="pipeline-step">Hosts</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Servers</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Registry</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Data</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Tool</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Agent</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Multi-server</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Distribution</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>Topics We'll Cover</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">The Host Landscape &mdash; Who Speaks MCP</a></li>
+        <li><a href="#slide-02">Reference Servers &mdash; What Anthropic Ships</a></li>
+        <li><a href="#slide-03">The MCP Registry</a></li>
+        <li><a href="#slide-04">Pattern A &mdash; Data Servers (Read-Only Context)</a></li>
+        <li><a href="#slide-05">Pattern B &mdash; Tool Servers (Side-Effecting Actions)</a></li>
+        <li><a href="#slide-06">Pattern C &mdash; Agent Servers (Sampling-Driven)</a></li>
+        <li><a href="#slide-07">Pattern D &mdash; Multi-Server Orchestration</a></li>
+        <li><a href="#slide-08">Distribution &mdash; <code>uvx</code> / <code>npx</code> / Docker</a></li>
+        <li><a href="#slide-09">What to Take Away</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>The Host Landscape &mdash; Who Speaks MCP</h2>
+    <p>Within fourteen months of the spec going public, MCP went from one Anthropic host to a dozen mainstream ones. The list as of early 2026:</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Host</th><th>Class</th><th>Transports</th><th>Notes</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Claude Desktop</strong></td><td>Chat app</td><td>stdio, Streamable HTTP</td><td>Reference implementation. Config in <code>claude_desktop_config.json</code>. Users add &ldquo;Connectors&rdquo; from the UI.</td></tr>
+                <tr><td><strong>Claude Code</strong></td><td>CLI agent</td><td>stdio, Streamable HTTP, SSE</td><td>Servers configured per-project (<code>.mcp.json</code>) or globally. First-class plugin model on top.</td></tr>
+                <tr><td><strong>Cursor</strong></td><td>IDE</td><td>stdio, Streamable HTTP</td><td>One of the earliest non-Anthropic adopters. Strong tool-call surfacing in chat.</td></tr>
+                <tr><td><strong>VS Code (Copilot Chat)</strong></td><td>IDE</td><td>stdio, Streamable HTTP</td><td>MCP servers run in the workspace; per-folder configuration.</td></tr>
+                <tr><td><strong>Zed</strong></td><td>IDE</td><td>stdio</td><td>Native Rust client; Slash-command bridge to MCP prompts.</td></tr>
+                <tr><td><strong>Continue</strong></td><td>IDE plugin</td><td>stdio, Streamable HTTP</td><td>Cross-IDE (VS Code, JetBrains). MCP servers feed the agent's tool surface.</td></tr>
+                <tr><td><strong>Windsurf</strong> (Cascade)</td><td>IDE</td><td>stdio, Streamable HTTP</td><td>Codeium's agentic IDE; full MCP server support.</td></tr>
+                <tr><td><strong>OpenAI Agents SDK</strong></td><td>SDK / framework</td><td>stdio, Streamable HTTP</td><td>OpenAI added MCP-client support; Anthropic servers are first-class peers of OpenAI &ldquo;hosted tools&rdquo;.</td></tr>
+                <tr><td><strong>LangGraph / LangChain</strong></td><td>Framework</td><td>stdio, Streamable HTTP</td><td>MCP integrations turn any server into a LangChain tool node.</td></tr>
+                <tr><td><strong>OpenWebUI</strong>, <strong>LibreChat</strong></td><td>Self-hosted UIs</td><td>stdio, Streamable HTTP</td><td>Bring-your-own-model UIs with MCP server hooks.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">What this convergence means</div>
+        <p>If you ship one MCP server, you reach all of these hosts on day one. That's the M+N payoff &mdash; and the reason the protocol stuck where every previous standardisation attempt failed.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>Reference Servers &mdash; What Anthropic Ships</h2>
+    <p>The <code>modelcontextprotocol/servers</code> repo on GitHub is a working library of reference implementations. They're worth reading for two reasons: they exercise every primitive correctly, and they're the canon hosts test against.</p>
+
+    <h3>The reference set, by category</h3>
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel accent-border">
+            <h4>Data servers (read-only)</h4>
+            <ul>
+                <li><code>filesystem</code> &mdash; tree under a root</li>
+                <li><code>git</code> &mdash; repo introspection</li>
+                <li><code>sqlite</code> / <code>postgres</code> &mdash; SQL query</li>
+                <li><code>fetch</code> &mdash; HTTP GET with content extraction</li>
+                <li><code>memory</code> &mdash; persistent KV across sessions</li>
+            </ul>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Tool servers (side-effecting)</h4>
+            <ul>
+                <li><code>github</code> &mdash; full GitHub API surface</li>
+                <li><code>gitlab</code></li>
+                <li><code>slack</code> &mdash; post messages, search</li>
+                <li><code>brave-search</code> &mdash; web search</li>
+                <li><code>puppeteer</code> &mdash; headless browser actions</li>
+            </ul>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Mixed / specialised</h4>
+            <ul>
+                <li><code>everything</code> &mdash; demonstrates every primitive</li>
+                <li><code>sequential-thinking</code> &mdash; reasoning scaffolding</li>
+                <li><code>time</code> &mdash; timezone-aware now/convert</li>
+                <li><code>aws-kb-retrieval</code> &mdash; Bedrock KB search</li>
+                <li><code>gdrive</code>, <code>google-maps</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>How to read one</h3>
+    <p>Pick <code>servers/src/sqlite</code> or <code>servers/src/filesystem</code> in the repo. Each is &lt; 500 lines. The structure is the same across all of them:</p>
+    <ol>
+        <li>Argument parsing &mdash; root path, db path, etc.</li>
+        <li>Server construction with declared capabilities.</li>
+        <li>Tool definitions with input schema.</li>
+        <li>Resource definitions (where applicable).</li>
+        <li>Single <code>run()</code> call binding stdio transport.</li>
+    </ol>
+
+    <div class="callout">
+        <div class="callout-label">Tip</div>
+        <p>The <code>everything</code> server is the one to read if you want to see every feature in one place. It's deliberately not useful as a tool &mdash; it's a working catalogue.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>The MCP Registry</h2>
+    <p>Through 2025 the discovery story was &ldquo;read READMEs&rdquo;. The official <strong>MCP Registry</strong>, generally available in early 2026, fixes that. It's an open, JSON-Schema-driven catalogue of servers with metadata, capabilities, and install instructions.</p>
+
+    <h3>Registry record &mdash; what it captures</h3>
+    <div class="code-block">
+        <div class="code-header">A registry entry (excerpt)</div>
+<pre><code><span class="str">{
+  "name": "io.acme/postgres",
+  "version": "2.4.1",
+  "description": "Read and write a PostgreSQL database.",
+  "homepage": "https://github.com/acme/mcp-postgres",
+  "license": "MIT",
+  "publisher": { "id": "io.acme", "verified": true },
+  "transports": ["stdio","http"],
+  "protocol_versions": ["2025-03-26","2025-06-18"],
+  "capabilities": {
+    "tools": [
+      { "name":"query",  "annotations":{ "readOnlyHint": true } },
+      { "name":"mutate", "annotations":{ "destructiveHint": true } }
+    ],
+    "resources": ["pg://schema/{table}"]
+  },
+  "install": {
+    "uvx":    "uvx mcp-server-postgres",
+    "docker": "ghcr.io/acme/mcp-postgres:2.4.1"
+  },
+  "auth": {
+    "type": "oauth2",
+    "scopes_required": ["postgres.read","postgres.write"]
+  },
+  "signature": "sha256:&hellip;"
+}</span></code></pre>
+    </div>
+
+    <h3>What the host does with this</h3>
+    <ul>
+        <li>Show the user a vetted list, with verified-publisher badges.</li>
+        <li>Cross-check the running server's tool list against the registry &mdash; mismatch is the rug-pull signal from deck 04.</li>
+        <li>Pre-flight install: pick the right runtime (<code>uvx</code> if Python is available, fallback to Docker).</li>
+        <li>Offer an &ldquo;upgrade available&rdquo; nudge when a new version is published.</li>
+    </ul>
+
+    <div class="callout">
+        <div class="callout-label">Why this matters</div>
+        <p>The Registry is the link that turns MCP from a protocol into a marketplace. It's also the easiest place to enforce a security posture organisation-wide: enterprise registries can shadow the public one and only surface vetted servers.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>Pattern A &mdash; Data Servers (Read-Only Context)</h2>
+    <p>The simplest and most common pattern. The server exposes <em>resources</em> &mdash; addressable read-only chunks of context. No side effects, no authentication beyond the user's own credentials, low risk surface.</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Shape</h4>
+            <ul>
+                <li>Resources, possibly templated (<code>db://users/{id}/profile</code>)</li>
+                <li>One or two read-only tools as ergonomic shortcuts (<code>query</code>, <code>search</code>)</li>
+                <li>Optional <code>resources/subscribe</code> for live data</li>
+                <li>No <code>destructiveHint</code> tools at all</li>
+            </ul>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>When to reach for it</h4>
+            <ul>
+                <li>You have a corpus the model should be able to read</li>
+                <li>Wikis, ticket trackers, documentation, CRM, log archives</li>
+                <li>Anything where the answer is &ldquo;here's the page, model goes brrr&rdquo;</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>Worked example shape</h3>
+    <div class="code-block">
+        <div class="code-header">Skeleton: a Confluence-style data server</div>
+<pre><code>resources/list   &rarr; { resourceTemplates:[
+                       { uriTemplate:<span class="str">"wiki://{space}/{slug}"</span>, name:<span class="str">"Wiki page"</span> },
+                       { uriTemplate:<span class="str">"wiki://search?q={q}"</span>, name:<span class="str">"Search"</span>}
+                     ]}
+resources/read   &rarr; { contents:[{ uri, mimeType:<span class="str">"text/markdown"</span>, text:&hellip; }]}
+tools/list       &rarr; [{ name:<span class="str">"recent_changes"</span>,
+                          annotations:{ readOnlyHint:<span class="kw">true</span> }}]
+tools/call       &rarr; { content:[{type:<span class="str">"resource_link"</span>, uri:<span class="str">"wiki://&hellip;"</span>}],
+                       structuredContent:{ pages:[&hellip;]}}</code></pre>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">Why resources, not tools, for reads</div>
+        <p>Resources are URIs &mdash; the host can cache, link, and reference them. A tool result is opaque text. If your &ldquo;tool&rdquo; is conceptually <code>fetch(URI) &rarr; bytes</code>, model it as a resource and the host gets all the address-tracking benefits for free.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>Pattern B &mdash; Tool Servers (Side-Effecting Actions)</h2>
+    <p>The riskier sibling. The server exposes tools that change something in the world &mdash; create issues, send messages, deploy services, mutate data. Annotations and confirmations carry the safety weight.</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Shape</h4>
+            <ul>
+                <li>Tools with accurate annotations &mdash; <code>destructiveHint</code> set honestly</li>
+                <li>Tight input schemas (regex on names, enums on operations)</li>
+                <li>Output schema where possible &mdash; downstream code needs structure</li>
+                <li>Idempotency hints where they apply</li>
+                <li>OAuth-protected if remote</li>
+            </ul>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Anti-patterns</h4>
+            <ul>
+                <li>One mega-tool that takes a free-text command</li>
+                <li>Lying annotations (<code>readOnlyHint:true</code> on a write tool)</li>
+                <li>Putting destructive operations on the same tool name as reads</li>
+                <li>Returning success for partial failures</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>Annotation discipline carries the security model</h3>
+    <p>The host decides UX based on annotations &mdash; auto-approve, prompt, confirm-with-typed-acknowledgement. <em>You</em>, the server author, are the only one who knows whether a tool is destructive. Be honest.</p>
+
+    <div class="code-block">
+        <div class="code-header">A correct destructive tool</div>
+<pre><code><span class="str">{
+  "name": "force_push",
+  "title": "Force Push Branch",
+  "description": "git push --force-with-lease to remote.",
+  "inputSchema": {
+    "type":"object",
+    "properties":{
+      "remote":{"type":"string"},
+      "branch":{"type":"string"},
+      "expected_sha":{"type":"string","pattern":"^[a-f0-9]{40}$"}
+    },
+    "required":["remote","branch"]
+  },
+  "annotations":{
+    "readOnlyHint":   false,
+    "destructiveHint":true,
+    "idempotentHint": false,
+    "openWorldHint":  true
+  }
+}</span></code></pre>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">Confirmations vs schema</div>
+        <p>Don't try to enforce destructive-action confirmations through clever schema (a <code>confirm: "yes"</code> field). The host's UI gates are the right place. Rely on <code>destructiveHint</code> and let the host decide whether to show a typed-acknowledgement prompt.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>Pattern C &mdash; Agent Servers (Sampling-Driven)</h2>
+    <p>The server runs an inner agent loop that calls back into the host's LLM via <code>sampling/createMessage</code>. The host owns the model and the user gates each sample &mdash; the server brings the workflow.</p>
+
+    <h3>Why this is different</h3>
+    <p>A normal tool call is a one-shot RPC. An agent server is multi-turn: it samples, inspects the result, samples again, possibly calls its own tools internally, and only returns to the host when its inner loop terminates.</p>
+
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 720 280" width="720" height="280" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .lane  { stroke: #30363d; stroke-dasharray: 2 3; }
+                .ll    { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; }
+                .req   { stroke: #76B900; stroke-width: 1.5; fill: none; marker-end: url(#mh5); }
+                .resp  { stroke: #d2a8ff; stroke-width: 1.5; fill: none; marker-end: url(#mp5); }
+                .lbl   { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+                .sub   { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+            </style>
+            <defs>
+                <marker id="mh5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#76B900"/>
+                </marker>
+                <marker id="mp5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#d2a8ff"/>
+                </marker>
+            </defs>
+            <text x="120" y="22" class="ll">Host (with LLM)</text>
+            <text x="540" y="22" class="ll">Agent server</text>
+            <line x1="160" y1="35" x2="160" y2="270" class="lane"/>
+            <line x1="560" y1="35" x2="560" y2="270" class="lane"/>
+
+            <path d="M 160 60  L 555 60"  class="req"/>
+            <text x="170" y="55"  class="lbl">tools/call  { "research_topic", topic:"quark plasma" }</text>
+
+            <path d="M 560 90  L 165 90"  class="resp"/>
+            <text x="170" y="85"  class="lbl">sampling/createMessage  { "draft outline" }   <span style="fill:#ffa657;">[user gate]</span></text>
+            <path d="M 160 115 L 555 115" class="req"/>
+            <text x="170" y="110" class="lbl">{ outline }</text>
+
+            <path d="M 560 145 L 165 145" class="resp"/>
+            <text x="170" y="140" class="lbl">sampling/createMessage  { "expand section 1" }</text>
+            <path d="M 160 170 L 555 170" class="req"/>
+            <text x="170" y="165" class="lbl">{ section text }</text>
+
+            <path d="M 560 200 L 165 200" class="resp"/>
+            <text x="170" y="195" class="lbl">notifications/progress  { 0.6, "synthesising" }</text>
+
+            <path d="M 560 235 L 165 235" class="resp"/>
+            <text x="170" y="230" class="lbl">tools/call result &mdash; final report</text>
+        </svg>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">Cost &amp; trust model</div>
+        <p>An agent server can fire many sample requests for one tool call. The host charges those samples to the user. Hosts let users approve sampling per-server with rate caps. Keep your inner loops bounded; emit <code>notifications/progress</code> generously so the user knows they're paying for something.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>Pattern D &mdash; Multi-Server Orchestration</h2>
+    <p>Hosts routinely run 5&ndash;15 servers concurrently. The host is the orchestrator: it sees the union of all tool catalogues, decides which server to call for each step, and stitches results together. Two friction points emerge.</p>
+
+    <h3>Friction 1 &mdash; Tool name collisions</h3>
+    <p>Two servers can both expose a <code>search</code> tool. The host needs to disambiguate. Two strategies:</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Server-prefixed names (host-side)</h4>
+            <p>Host renames <code>search</code> from server <code>github</code> to <code>github__search</code> in the model's tool catalogue, dispatches based on the prefix on call. Server stays oblivious.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Namespaced by the server author</h4>
+            <p>Server author names tools <code>gh_search</code>, <code>jira_search</code>, etc. Less elegant; works without host help. Pick one and stick with it across your tool surface.</p>
+        </div>
+    </div>
+
+    <h3>Friction 2 &mdash; Roots and resource scoping</h3>
+    <p>The user opens project <code>~/code/api</code> in their IDE. Three running servers care: <code>filesystem</code>, <code>git</code>, <code>postgres</code>. The host's <code>roots</code> mechanism is how it tells them all in one shot:</p>
+
+    <div class="code-block">
+        <div class="code-header">Host &rarr; servers, on workspace change</div>
+<pre><code><span class="cm">// from each connected server&rsquo;s perspective</span>
+<span class="str">{"jsonrpc":"2.0","method":"notifications/roots/list_changed"}</span>
+
+<span class="cm">// servers respond with</span>
+<span class="str">{"jsonrpc":"2.0","id":99,"method":"roots/list"}</span>
+
+<span class="cm">// host returns the current set</span>
+<span class="str">{"jsonrpc":"2.0","id":99,"result":{
+  "roots":[
+    {"uri":"file:///Users/me/code/api","name":"api"}
+  ]
+}}</span></code></pre>
+    </div>
+
+    <p>Servers MUST honour roots: <code>filesystem</code> only serves files under the listed roots; <code>git</code> opens the repos inside them; <code>postgres</code> may key its connection on the project. Roots are the user's consent boundary materialised on the wire.</p>
+
+    <h3>Friction 3 &mdash; Cross-server data flow</h3>
+    <p>Servers don't talk to each other. The host is the only thing that sees output from server A go into the prompt that produces a tool call to server B. That's deliberate; it keeps the trust topology star-shaped instead of mesh-shaped.</p>
+
+    <div class="callout">
+        <div class="callout-label">Practical implication</div>
+        <p>If a tool's output is meant to flow into another server's tool, design that output to be small, structured, and self-describing. The host won't know which fields are stable contracts and which are transient prose unless your output schema tells it.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-08">
+    <div class="slide-number">08</div>
+    <h2>Distribution &mdash; <code>uvx</code> / <code>npx</code> / Docker</h2>
+    <p>How servers reach users. Almost every community server falls into one of three distribution shapes:</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Shape</th><th>Command</th><th>When</th><th>Trade-offs</th></tr></thead>
+            <tbody>
+                <tr><td><strong>uvx</strong> (Python)</td><td><code>uvx mcp-server-foo</code></td><td>Server is published to PyPI</td><td>Zero-install for the user, downloads on first run, <code>uv</code>'s caching makes second run instant. Python-only.</td></tr>
+                <tr><td><strong>npx</strong> (Node)</td><td><code>npx -y @scope/mcp-server-foo</code></td><td>Server is published to npm</td><td>Same UX for Node. The <code>-y</code> auto-confirms the install prompt.</td></tr>
+                <tr><td><strong>Docker</strong></td><td><code>docker run --rm -i ghcr.io/acme/mcp-foo:1.4</code></td><td>Server has system deps or you want sandboxing</td><td>Heavier, but ships the runtime. Pin by digest in production.</td></tr>
+                <tr><td><strong>Native binary</strong></td><td><code>/usr/local/bin/mcp-foo</code></td><td>Static binary, e.g. Go server</td><td>Fastest startup. Distribution is your problem (Homebrew, cargo, releases).</td></tr>
+                <tr><td><strong>Streamable HTTP</strong></td><td><code>https://mcp.acme.io</code></td><td>Hosted SaaS</td><td>No install. OAuth required. Versioning happens server-side.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Versioning &amp; protocol-version pinning</h3>
+    <p>MCP date-stamped versions and your server's semver are independent. Best practice:</p>
+    <ul>
+        <li>Advertise <em>all</em> protocol versions you genuinely support in the registry record &mdash; not just the latest.</li>
+        <li>On <code>initialize</code>, accept the highest mutually-supported value the client offers.</li>
+        <li>Bump your server's semver when its tool surface changes; bump the registry's <code>protocol_versions</code> when you tested against a new spec.</li>
+        <li>For Streamable HTTP, support a <strong>two-spec window</strong> &mdash; the current and the previous &mdash; to give clients time to upgrade.</li>
+    </ul>
+
+    <div class="callout">
+        <div class="callout-label">A note on Docker for stdio</div>
+        <p>You can run a stdio server inside a container by attaching the host's stdin/stdout (<code>docker run -i &hellip;</code>). The container becomes a sandbox without changing the protocol. This is the path of least resistance for &ldquo;I want isolation, I don't want to rewrite my server.&rdquo;</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-09">
+    <div class="slide-number">09</div>
+    <h2>What to Take Away</h2>
+    <ul>
+        <li><strong>The host landscape converged.</strong> Build one server, reach Claude Desktop, Claude Code, Cursor, VS Code, Zed, Continue, Windsurf, OpenAI Agents, LangGraph &mdash; all on day one.</li>
+        <li><strong>The reference set is your textbook.</strong> Every server idiom you'll need is in <code>modelcontextprotocol/servers</code>; <code>everything</code> shows them all in one place.</li>
+        <li><strong>The Registry turns MCP into a marketplace.</strong> Verified publishers, capability advertisement, install metadata, signed records. Enterprise registries shadow the public one.</li>
+        <li><strong>Four canonical patterns.</strong> Data servers (resources, read-only). Tool servers (annotated side effects). Agent servers (sampling-driven inner loops). Multi-server orchestration (the host's problem, but shaped by your output schema).</li>
+        <li><strong>Distribution is solved.</strong> <code>uvx</code> and <code>npx</code> for local, Docker for sandboxed, Streamable HTTP for SaaS. Pin versions, advertise honestly, support a window.</li>
+        <li><strong>Server design is annotation discipline.</strong> The protocol can't tell which of your tools is dangerous &mdash; you have to.</li>
+    </ul>
+
+    <div class="callout">
+        <div class="callout-label">The whole series, in one paragraph</div>
+        <p>MCP is JSON-RPC primitives over stdio or Streamable HTTP, with capability negotiation and version stamping (deck 01), wire-level transports designed for resumable streams and session reuse (deck 02), an SDK ecosystem that gets you a useful server in 30 lines (deck 03), security mechanisms (OAuth 2.1, audience binding, sandboxing) that defuse a real threat surface (deck 04), and a converged host ecosystem with four canonical server-design patterns (deck 05). It's not a complicated protocol &mdash; the hard part is shipping a server that's a good citizen.</p>
+    </div>
+</section>
+
+<footer class="footer">
+    <p>Part of the <a href="https://github.com/BrendanJamesLynskey/LLMs#model-context-protocol-mcp">Model Context Protocol Series</a></p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem;"><a href="https://github.com/BrendanJamesLynskey/LLMs#model-context-protocol-mcp">Back to Series Index</a></p>
+</footer>
+<script>
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.slide').forEach(slide => {
+        slide.style.opacity = '0';
+        slide.style.transform = 'translateY(30px)';
+        slide.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(slide);
+    });
+</script>
+</body>
+</html>
