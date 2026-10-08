@@ -398,13 +398,14 @@
         }
     /* deck-mobile-fix:hero */ .hero{overflow:hidden}@supports (overflow-x:clip){.hero{overflow:visible;overflow-x:clip}}
     /* deck-mobile-fix:phone */ @media (max-width:640px){.diagram-box,.tier-fill,.section-divider>span,.action-btn{white-space:normal;overflow-wrap:anywhere}.diagram-grid>*,.diagram-panel,.diagram-box,.code-block,.callout,.metric,.control-group,.control-row>*,.pipeline-body,.roll-track>*,.tier-fill,.timeline-row>*{min-width:0;max-width:100%}p,li,a,code,td,th,.callout,.diagram-panel{overflow-wrap:break-word}pre{max-width:100%;overflow-x:auto}table{display:block;max-width:100%;overflow-x:auto}.katex-display,.bits,.canvas-wrap,.influence-map-wrapper,.timeline-track,div:has(>.bank-cell){max-width:100%;overflow-x:auto;overflow-y:hidden}select,input,img,video,iframe,.action-btn{max-width:100%}canvas{max-width:100%;height:auto}}
-    </style>
+        /* era-tag (brief 28) */ .era-tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;font-weight:500;letter-spacing:.02em;text-transform:none;padding:.1rem .55rem;border-radius:999px;border:1px solid var(--border);color:var(--text-secondary);background:var(--bg-code);vertical-align:middle;margin-left:.4rem;white-space:nowrap}@media (max-width:640px){.era-tag{white-space:normal;max-width:100%}}.era-tag.now{color:var(--accent);border-color:var(--accent)}.spec-cite{font-size:.8rem;color:var(--text-secondary);margin-top:.6rem}.spec-cite a,.callout a,.diagram-panel a{color:var(--accent)}
+</style>
 </head>
 <body>
 <header class="hero">
     <div class="series-label">Model Context Protocol Series — Presentation 05</div>
     <h1>Ecosystem &amp; <span class="accent">Patterns</span></h1>
-    <p class="subtitle">Every host that speaks MCP, the reference servers worth reading, the Registry, the four canonical server-design patterns, and how distribution really works in 2026.</p>
+    <p class="subtitle">Every host that speaks MCP, the reference servers worth reading, the Registry, the four canonical server-design patterns, and how distribution really works in 2026. Updated for revision 2026-07-28 (stateless MCP, Sampling and Roots deprecated); handshake-era material is tagged &ldquo;before 2026-07-28&rdquo;.</p>
 
     <div class="tags">
         <span class="tag">Hosts</span>
@@ -443,7 +444,7 @@
         <li><a href="#slide-03">The MCP Registry</a></li>
         <li><a href="#slide-04">Pattern A &mdash; Data Servers (Read-Only Context)</a></li>
         <li><a href="#slide-05">Pattern B &mdash; Tool Servers (Side-Effecting Actions)</a></li>
-        <li><a href="#slide-06">Pattern C &mdash; Agent Servers (Sampling-Driven)</a></li>
+        <li><a href="#slide-06">Pattern C &mdash; Agent Servers (Sampling-Driven)</a> <span class="era-tag">Sampling deprecated in 2026-07-28</span></li>
         <li><a href="#slide-07">Pattern D &mdash; Multi-Server Orchestration</a></li>
         <li><a href="#slide-08">Distribution &mdash; <code>uvx</code> / <code>npx</code> / Docker</a></li>
         <li><a href="#slide-09">What to Take Away</a></li>
@@ -691,7 +692,7 @@ tools/call       &rarr; { content:[{type:<span class="str">"resource_link"</span
 
 <section class="slide" id="slide-06">
     <div class="slide-number">06</div>
-    <h2>Pattern C &mdash; Agent Servers (Sampling-Driven)</h2>
+    <h2>Pattern C &mdash; Agent Servers (Sampling-Driven) <span class="era-tag">Sampling deprecated in 2026-07-28</span></h2>
     <p>The server runs an inner agent loop that calls back into the host's LLM via <code>sampling/createMessage</code>. The host owns the model and the user gates each sample &mdash; the server brings the workflow.</p>
 
     <h3>Why this is different</h3>
@@ -745,6 +746,12 @@ tools/call       &rarr; { content:[{type:<span class="str">"resource_link"</span
         <div class="callout-label">Cost &amp; trust model</div>
         <p>An agent server can fire many sample requests for one tool call. The host charges those samples to the user. Hosts let users approve sampling per-server with rate caps. Keep your inner loops bounded; emit <code>notifications/progress</code> generously so the user knows they're paying for something.</p>
     </div>
+
+    <div class="callout">
+        <div class="callout-label">Pattern C in 2026-07-28 <span class="era-tag now">2026-07-28</span></div>
+        <p>The diagram shows sampling as server-initiated requests (before 2026-07-28). In 2026-07-28 Sampling is <strong>deprecated</strong> (still functional; earliest removal in the first revision on or after 2027-07-28) and its suggested migration is for the server to call an LLM provider API itself. Where sampling is still used, each <code>sampling/createMessage</code> travels in the <code>inputRequests</code> of an <code>input_required</code> result and the client retries the tool call with the completion (deck 03, slide 06b), so an inner loop of <em>n</em> samples becomes up to <em>n</em> retries of the same <code>tools/call</code>, with the loop's state carried in <code>requestState</code>.</p>
+    </div>
+    <p class="spec-cite">Source: MCP specification 2026-07-28 &mdash; <a href="https://modelcontextprotocol.io/specification/2026-07-28/deprecated">Deprecated features</a>; <a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr">Multi round-trip requests</a> (accessed 2026-10-08).</p>
 </section>
 
 <section class="slide" id="slide-07">
@@ -766,7 +773,7 @@ tools/call       &rarr; { content:[{type:<span class="str">"resource_link"</span
         </div>
     </div>
 
-    <h3>Friction 2 &mdash; Roots and resource scoping</h3>
+    <h3>Friction 2 &mdash; Roots and resource scoping <span class="era-tag">before 2026-07-28</span></h3>
     <p>The user opens project <code>~/code/api</code> in their IDE. Three running servers care: <code>filesystem</code>, <code>git</code>, <code>postgres</code>. The host's <code>roots</code> mechanism is how it tells them all in one shot:</p>
 
     <div class="code-block">
@@ -786,6 +793,12 @@ tools/call       &rarr; { content:[{type:<span class="str">"resource_link"</span
     </div>
 
     <p>Servers MUST honour roots: <code>filesystem</code> only serves files under the listed roots; <code>git</code> opens the repos inside them; <code>postgres</code> may key its connection on the project. Roots are the user's consent boundary materialised on the wire.</p>
+
+    <div class="callout">
+        <div class="callout-label">Roots in 2026-07-28 <span class="era-tag now">2026-07-28</span></div>
+        <p>Roots are <strong>deprecated</strong> and <code>notifications/roots/list_changed</code> is removed; a server can no longer call <code>roots/list</code> on its own, only ask for it inside an <code>input_required</code> result. The suggested migration is to pass directories or files as tool parameters, resource URIs or server configuration. The consent boundary moves into the host's per-call arguments and the server's config.</p>
+    </div>
+    <p class="spec-cite">Source: MCP specification 2026-07-28 &mdash; <a href="https://modelcontextprotocol.io/specification/2026-07-28/client/roots">Roots</a>; <a href="https://modelcontextprotocol.io/specification/2026-07-28/deprecated">Deprecated features</a> (accessed 2026-10-08).</p>
 
     <h3>Friction 3 &mdash; Cross-server data flow</h3>
     <p>Servers don't talk to each other. The host is the only thing that sees output from server A go into the prompt that produces a tool call to server B. That's deliberate; it keeps the trust topology star-shaped instead of mesh-shaped.</p>
@@ -818,10 +831,11 @@ tools/call       &rarr; { content:[{type:<span class="str">"resource_link"</span
     <p>MCP date-stamped versions and your server's semver are independent. Best practice:</p>
     <ul>
         <li>Advertise <em>all</em> protocol versions you genuinely support in the registry record &mdash; not just the latest.</li>
-        <li>On <code>initialize</code>, accept the highest mutually-supported value the client offers.</li>
+        <li>On <code>initialize</code>, accept the highest mutually-supported value the client offers <span class="era-tag">before 2026-07-28</span>. From 2026-07-28 there is no <code>initialize</code>: implement <code>server/discover</code>, judge the version on every request and answer an unsupported one with <code>-32022</code> listing <code>supported</code>; a dual-era server also keeps answering <code>initialize</code> for legacy clients.</li>
         <li>Bump your server's semver when its tool surface changes; bump the registry's <code>protocol_versions</code> when you tested against a new spec.</li>
         <li>For Streamable HTTP, support a <strong>two-spec window</strong> &mdash; the current and the previous &mdash; to give clients time to upgrade.</li>
     </ul>
+    <p class="spec-cite">Source: MCP specification 2026-07-28 &mdash; <a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning">Versioning and compatibility</a>; <a href="https://modelcontextprotocol.io/specification/2026-07-28/server/discover">Discovery</a> (accessed 2026-10-08).</p>
 
     <div class="callout">
         <div class="callout-label">A note on Docker for stdio</div>
@@ -839,11 +853,12 @@ tools/call       &rarr; { content:[{type:<span class="str">"resource_link"</span
         <li><strong>Four canonical patterns.</strong> Data servers (resources, read-only). Tool servers (annotated side effects). Agent servers (sampling-driven inner loops). Multi-server orchestration (the host's problem, but shaped by your output schema).</li>
         <li><strong>Distribution is solved.</strong> <code>uvx</code> and <code>npx</code> for local, Docker for sandboxed, Streamable HTTP for SaaS. Pin versions, advertise honestly, support a window.</li>
         <li><strong>Server design is annotation discipline.</strong> The protocol can't tell which of your tools is dangerous &mdash; you have to.</li>
+        <li><strong>Two protocol eras coexist.</strong> <span class="era-tag now">2026-07-28</span> 2026-07-28 made MCP stateless; hosts and SDKs that are dual-era still talk to handshake-era servers. Gateways that combine many servers are covered in <a href="https://agent-protocols-explained.vercel.app/learn/07-gateways-and-composition">chapter 7 of Agent Protocols Explained</a>.</li>
     </ul>
 
     <div class="callout">
         <div class="callout-label">The whole series, in one paragraph</div>
-        <p>MCP is JSON-RPC primitives over stdio or Streamable HTTP, with capability negotiation and version stamping (deck 01), wire-level transports designed for resumable streams and session reuse (deck 02), an SDK ecosystem that gets you a useful server in 30 lines (deck 03), security mechanisms (OAuth 2.1, audience binding, sandboxing) that defuse a real threat surface (deck 04), and a converged host ecosystem with four canonical server-design patterns (deck 05). It's not a complicated protocol &mdash; the hard part is shipping a server that's a good citizen.</p>
+        <p>MCP is JSON-RPC primitives over stdio or Streamable HTTP, with capability negotiation and version stamping (deck 01), wire-level transports designed for resumable streams and session reuse (deck 02; revision 2026-07-28 replaced both with stateless, self-describing requests), an SDK ecosystem that gets you a useful server in 30 lines (deck 03), security mechanisms (OAuth 2.1, audience binding, sandboxing) that defuse a real threat surface (deck 04), and a converged host ecosystem with four canonical server-design patterns (deck 05). It's not a complicated protocol &mdash; the hard part is shipping a server that's a good citizen.</p>
     </div>
 </section>
 
